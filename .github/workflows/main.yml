@@ -1,4 +1,4 @@
-name: Devops Pipeline
+name: Deploy Website
 
 on: [push]
 
@@ -10,5 +10,5 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v3
 
-      - name: Print message
-        run: ls
+      - name: Copy files to the server
+        run: scp -r ./index.html user@server:/var/www/html
