@@ -18,3 +18,5 @@ sudo tee /var/www/html/index.html > /dev/null <<EOF
 EOF
 
 echo "Deployment Complete"
+
+echo "This is a new line. (Testing git's push)"
