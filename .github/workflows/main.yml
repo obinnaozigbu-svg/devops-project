@@ -21,11 +21,11 @@ jobs:
       - name: Adding EC2 host to known_hosts
         run: |
           mkdir -p ~/.ssh
-          ssh-keyscan -H 51.20.117.64 >> ~/.ssh/known_hosts
+          ssh-keyscan -H 51.20.43.183 >> ~/.ssh/known_hosts
 
       - name: Prepare server
         run: |
-          ssh -o StrictHostKeyChecking=no ubuntu@51.20.117.64 "
+          ssh -o StrictHostKeyChecking=no ubuntu@51.20.43.183 "
             sudo apt update &&\
             sudo apt install nginx -y &&\
             sudo mkdir -p /var/www/html
@@ -34,7 +34,7 @@ jobs:
 
       - name: Sync web folder to server
         run: |
-          rsync -av --delete ./web/ ubuntu@51.20.117.64:/var/www/html
+          rsync -av --delete ./web/ ubuntu@51.20.43.183:/var/www/html
 
       - name: Deployment Success
         run: echo "Deployment completed successfully"
