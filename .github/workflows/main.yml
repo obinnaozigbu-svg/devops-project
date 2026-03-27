@@ -4,6 +4,9 @@ on:
   push:
     branches:
       - main
+    paths:
+      - 'web/**'
+  workflow_dispatch:
 
 jobs:
   build:
@@ -36,5 +39,8 @@ jobs:
         run: |
           rsync -av --delete ./web/ ubuntu@51.20.43.183:/var/www/html
 
-      - name: Deployment Success
-        run: echo "Deployment completed successfully"
+      - name: Verify Deployment
+        run: |
+          ssh -o StrictHostChecking=no ubuntu@51.20.43.183 "
+            ls /var/www/html
+          "
