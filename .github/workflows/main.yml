@@ -41,6 +41,6 @@ jobs:
 
       - name: Verify Deployment
         run: |
-          ssh -o StrictHostChecking=no ubuntu@51.20.43.183 "
+          ssh -o StrictHostKeyChecking=no ubuntu@51.20.43.183 "
             ls /var/www/html
           "
