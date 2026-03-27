@@ -1,6 +1,9 @@
 name: Deploy Website
 
-on: [push]
+on:
+  push:
+    branches:
+      - main
 
 jobs:
   build:
@@ -29,8 +32,8 @@ jobs:
             sudo chown -R ubuntu:ubuntu /var/www/html
           "
 
-     - name: Deploy all website files
-       run: scp ./web/* ubuntu@51.20.117.64:/var/www/html
+      - name: Deploy all website files
+        run: scp ./web/* ubuntu@51.20.117.64:/var/www/html
 
       - name: Deployment Success
         run: echo "Deployment completed successfully"
