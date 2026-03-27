@@ -22,7 +22,7 @@ jobs:
 
       - name: Prepare server
         run: |
-          ssh -o StictHostKeyChecking=no ubuntu@51.20.117.64 "
+          ssh -o StrictHostKeyChecking=no ubuntu@51.20.117.64 "
             sudo apt update &&\
             sudo apt install nginx -y &&\
             sudo mkdir -p /var/www/html
