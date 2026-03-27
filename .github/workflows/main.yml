@@ -29,11 +29,8 @@ jobs:
             sudo chown -R ubuntu:ubuntu /var/www/html
           "
 
-      - name: Deploying index.html
-        run: scp -r ./index.html ubuntu@51.20.117.64:/var/www/html
-
-     - name: Deploying about.html
-       run: scp -r ./about.html ubuntu@51.20.117.64:/var/www/html
+     - name: Deploy all website files
+       run: scp ./web/* ubuntu@51.20.117.64:/var/www/html
 
       - name: Deployment Success
         run: echo "Deployment completed successfully"
