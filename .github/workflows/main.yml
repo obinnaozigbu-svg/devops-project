@@ -11,7 +11,7 @@ jobs:
 
     steps:
       - name: Checkout code
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
 
       - name: Setup SSH key
         uses: webfactory/ssh-agent@v0.9.0
@@ -32,8 +32,9 @@ jobs:
             sudo chown -R ubuntu:ubuntu /var/www/html
           "
 
-      - name: Deploy all website files
-        run: scp ./web/* ubuntu@51.20.117.64:/var/www/html
+      - name: Sync web folder to server
+        run: |
+          rsync -av --delete ./web/ ubuntu@51.20.117.64:/var/www/html
 
       - name: Deployment Success
         run: echo "Deployment completed successfully"
