@@ -35,12 +35,26 @@ jobs:
             sudo chown -R ubuntu:ubuntu /var/www/html
           "
 
-      - name: Sync web folder to server
-        run: |
-          rsync -av --delete ./web/ ubuntu@51.20.43.183:/var/www/html
-
-      - name: Verify Deployment
+      - name: Deploy to EC2 without downtime
         run: |
           ssh -o StrictHostKeyChecking=no ubuntu@51.20.43.183 "
-            ls /var/www/html
+            set -e  #Exit if any command fails
+
+            #Ensure release folder exists
+            mkdir -p /var/www/releases
+
+            #Create a unique release folder with timestamp
+            RELEASE_DIR=/var/www/releases/release-$(date +%s)
+            mkdir -p \$RELEASE_DIR
+            echo "Deploying to:" \$RELEASE_DIR
+
+            #Upload all files to the new release
+            rsync -av --delete ~/devops-project/web/ \$RELEASE_DIR
+
+            #Update symblinkk so that Nginx servers the new release
+            ln -sfn \$RELEASE_DIR /var/www/html
+            echo "Deployment complete"
+
+            #Keep last 3 releases, delete older ones
+            ls -dt /var/www/releases/* | tail -n +4 | xargs rm -rf
           "
