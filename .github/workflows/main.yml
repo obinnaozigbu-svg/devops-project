@@ -52,7 +52,7 @@ jobs:
             rsync -av --delete ~/devops-project/web/ \$RELEASE_DIR
 
             #Update symblinkk so that Nginx servers the new release
-            ln -sfn \$RELEASE_DIR /var/www/html
+            ln -sfn \$RELEASE_DIR current
             echo "Deployment complete"
 
             #Keep last 3 releases, delete older ones
