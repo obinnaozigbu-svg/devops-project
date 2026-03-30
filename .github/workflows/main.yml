@@ -51,8 +51,8 @@ jobs:
             #Upload all files to the new release
             rsync -av --delete ~/devops-project/web/ \$RELEASE_DIR
 
-            #Update symblinkk so that Nginx servers the new release
-            ln -sfn \$RELEASE_DIR current
+            #Update symlink so that Nginx serves the new release
+            ln -sfn \$RELEASE_DIR /var/www/html/current
             echo "Deployment complete"
 
             #Keep last 3 releases, delete older ones
