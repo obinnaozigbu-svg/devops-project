@@ -45,7 +45,7 @@ jobs:
             sudo chown -R ubuntu:ubuntu /var/www
 
             #Configure nginx root to /current
-            sudo sed -i 's|root /var/www/html;|root /var/www/html/current;|' etc/nginx/sites-available/default
+            sudo sed -i 's|root /var/www/html;|root /var/www/html/current;|' /etc/nginx/sites-available/default
 
             #Restart nginx
             sudo systemctl restart nginx
