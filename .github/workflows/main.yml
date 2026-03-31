@@ -80,7 +80,7 @@ jobs:
             echo "Deployment complete"
 
             #Verify deployment
-            if [ ! -f /var/www/html/current ]; then
+            if [ ! -f /var/www/html/current/index.html ]; then
               echo "Deplyment failed, rolling back..."
               if [ -n \"\$PREV_RELEASE\" ]; then
                 ln -sfn \$PREV_RELEASE /var/www/html/current
