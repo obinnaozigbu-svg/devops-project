@@ -98,7 +98,7 @@ jobs:
       - name: Keep at least 3 releases, delete older ones
         run: |
           ssh -o StrictHostKeyChecking=no ubuntu@16.171.141.46 "
-            ls -dt /var/www/releases/* | tail -n +4 | rm -rf xargs
+            ls -dt /var/www/releases/* | tail -n +4 | xargs rm -rf 
           "
 
       - name: Notify Success
