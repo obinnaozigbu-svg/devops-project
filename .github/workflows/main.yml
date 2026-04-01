@@ -78,19 +78,24 @@ jobs:
             #Update symlink so that Nginx serves the new release
             ln -sfn \$NEW_RELEASE /var/www/html/current
             echo "Deployment complete"
+          "
 
-            #Verify deployment
-            if [ ! -f /var/www/html/current/index.html ]; then
+      - name: Verify deployment
+        run: |
+          ssh -o StrictHostChecking=no ubuntu@16.171.141.46 "
+            STATUS =\$(curl -s -o /dev/null -w '%{http_code}' http://16.171.141.46/index.html)
+            if [ \"\$STATUS\" -ne 200 ]; then
               echo "Deplyment failed, rolling back..."
               if [ -n \"\$PREV_RELEASE\" ]; then
                 ln -sfn \$PREV_RELEASE /var/www/html/current
                 echo "Rollback complete"
+              else
+                echo "Deployment successful"
               fi
-              exit 1
-            fi
+          "
 
-            echo "Deployment successful"
-
-            #Keep last 3 releases, delete older ones
-            ls -dt /var/www/releases/* | tail -n +4 | xargs rm -rf
+      - name: Keep at least 3 releases, delete older ones
+        run: |
+          ssh -o StrictHostChecking=no ubuntu@16.171.141.46 "
+            ls -dt /var/www/releases/* | tail -n +4 | rm -rf xargs
           "
