@@ -83,15 +83,16 @@ jobs:
       - name: Verify deployment
         run: |
           ssh -o StrictHostKeyChecking=no ubuntu@16.171.141.46 "
-            STATUS =\$(curl -s -o /dev/null -w '%{http_code}' http://16.171.141.46/index.html)
-            if [ \"\$STATUS\" -ne 200 ]; then
-              echo "Deplyment failed, rolling back..."
+            STATUS=\$(curl -s -o /dev/null -w '%{http_code}' http://16.171.141.46/index.html)
+            if [ \'\$STATUS\' -ne 200 ]; then
+              echo 'Deplyment failed, rolling back...'
               if [ -n \"\$PREV_RELEASE\" ]; then
                 ln -sfn \$PREV_RELEASE /var/www/html/current
-                echo "Rollback complete"
+                echo 'Rollback complete'
               else
-                echo "Deployment successful"
+                echo 'Deployment successful'
               fi
+            fi
           "
 
       - name: Keep at least 3 releases, delete older ones
