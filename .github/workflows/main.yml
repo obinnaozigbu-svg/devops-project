@@ -100,3 +100,18 @@ jobs:
           ssh -o StrictHostKeyChecking=no ubuntu@16.171.141.46 "
             ls -dt /var/www/releases/* | tail -n +4 | rm -rf xargs
           "
+
+      - name: Notify Success
+        if: success()
+        run: |
+          curl -H "Content-Type: application/json" \
+          -d '{"content": "Deployment Successful"}' \
+          ${{ secrets.DISCORD_WEBHOOK_URL }}
+
+      - name: Notify Failure
+        if: failure()
+        run: |
+          curl -H "Content-Type: application/json" \
+          -d '{"content": "Deployment Failed! Rollback Executed"}' \
+          ${{ secrets.DISCORD_WEBHOOK_URL }}
+          
