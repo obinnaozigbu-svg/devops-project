@@ -44,7 +44,10 @@ jobs:
             #Set ownership
             sudo chown -R ubuntu:ubuntu /var/www
 
-            #Replace nginx default config file with the one in devops-project/nginx
+            #Copy the custom config file from the github runner to the /tmp folder on EC2
+            scp nginx/default.conf /tmp/default.conf
+
+            #Replace nginx default config file with the one in /tmp
             sudo mv /devops-project/nginx/default.conf /etc/nginx/sites-available/default
 
             #Restart nginx
