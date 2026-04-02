@@ -50,6 +50,9 @@ jobs:
             #Replace nginx default config file with the one in /tmp
             sudo mv /tmp/default.conf /etc/nginx/sites-available/default
 
+            #Test
+            sudo nginx -t
+
             #Restart nginx
             sudo systemctl restart nginx
 
