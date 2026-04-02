@@ -28,6 +28,9 @@ jobs:
 
       - name: Prepare server
         run: |
+          #Copy the custom config file from the github runner to the /tmp folder on EC2
+          scp  -o StrictHostKeyChecking=no nginx/default.conf ubuntu@13.61.0.217:/tmp/default.conf
+
           ssh -o StrictHostKeyChecking=no ubuntu@13.61.0.217 "
 
             set -e
@@ -44,11 +47,8 @@ jobs:
             #Set ownership
             sudo chown -R ubuntu:ubuntu /var/www
 
-            #Copy the custom config file from the github runner to the /tmp folder on EC2
-            scp nginx/default.conf /tmp/default.conf
-
             #Replace nginx default config file with the one in /tmp
-            sudo mv /devops-project/nginx/default.conf /etc/nginx/sites-available/default
+            sudo mv /tmp/default.conf /etc/nginx/sites-available/default
 
             #Restart nginx
             sudo systemctl restart nginx
@@ -84,7 +84,7 @@ jobs:
               echo 'Staging failed'
               exit 1
             else
-              echo 'Staging ok'
+              echo 'Staging OK'
             fi
             
           "
@@ -113,6 +113,6 @@ jobs:
         if: failure()
         run: |
           curl -H "Content-Type: application/json" \
-          -d '{"content": "Deployment Failed! Rollback Executed"}' \
+          -d '{"content": "Deployment Failed!"}' \
           ${{ secrets.DISCORD_WEBHOOK_URL }}
           
