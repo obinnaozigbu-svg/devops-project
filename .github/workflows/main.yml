@@ -82,7 +82,7 @@ jobs:
       - name: Test Staging Deployment
         run: |
           ssh -o StrictHostKeyChecking=no ubuntu@13.61.0.217 "
-            STATUS=\$(curl -s -o /dev/null -w '%{http_code}' http://16.171.141.46/staging/index.html)
+            STATUS=\$(curl -s -o /dev/null -w '%{http_code}' http://13.61.0.217/staging/index.html)
             if [ \'\$STATUS\' -ne 200 ]; then
               echo 'Staging failed'
               exit 1
@@ -97,11 +97,11 @@ jobs:
         run: |
           ssh -o StrictHostKeyChecking=no ubuntu@13.61.0.217 "
             ln -sfn /var/www/staging/current /var/www/html/current
-
+          "
 
       - name: Keep at least 3 releases, delete older ones
         run: |
-          ssh -o StrictHostKeyChecking=no ubuntu@16.171.141.46 "
+          ssh -o StrictHostKeyChecking=no ubuntu@13.61.0.217 "
             ls -dt /var/www/releases/* | tail -n +4 | xargs rm -rf 
           "
 
