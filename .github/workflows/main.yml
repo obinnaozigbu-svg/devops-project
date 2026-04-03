@@ -9,9 +9,9 @@ on:
   workflow_dispatch:
 
 jobs:
-  build:
+  deploy-staging:
     runs-on: ubuntu-latest
-    environment: production
+
 
     steps:
       - name: Checkout code
@@ -80,7 +80,7 @@ jobs:
             echo "Deployment complete"
           "
 
-      - name: Test Staging Deployment
+      - name: Test Staging Deployment (Health Check)
         run: |
           ssh -o StrictHostKeyChecking=no ubuntu@13.61.0.217 "
             STATUS=\$(curl -s -o /dev/null -w '%{http_code}' http://13.61.0.217/staging/index.html)
@@ -90,13 +90,27 @@ jobs:
             else
               echo 'Staging OK'
             fi
-            
+
           "
+  deploy-production:
+    needs: deploy-staging
+    runs-on: ubuntu-latest
+    environment: production    #triggers manual approval
+    strategy:
+      matrix:
+        server: [13.62.18.144, 16.16.182.23]
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup SSH key
+        uses: webfactory/ssh-agent@v0.9.0
+        with:
+          ssh-private-key: ${{ secrets.SSH_KEY }}
 
       - name: Promote to Production
-        if: success()
         run: |
-          ssh -o StrictHostKeyChecking=no ubuntu@13.61.0.217 "
+          ssh -o StrictHostKeyChecking=no ubuntu@{{ matrix.server }} "
             RELEASE=/var/www/staging/releases/release-${{ github.sha }}
             ln -sfn \$RELEASE /var/www/html/current
           "
@@ -105,7 +119,7 @@ jobs:
       - name: Rollback  #Runs if healthcheck fails
         if: failure()
         run: |
-          ssh -o StrictHostKeyChecking=no ubuntu@13.61.0.217 "
+          ssh -o StrictHostKeyChecking=no ubuntu@{{ matrix.server }} "
             PREV_RELEASE=\$(ls -dt /var/www/staging/releases/* | sed -n '2p')
             if [ -n \'\$PREV_RELEASE\' ]; then
               ln -sfn \$PREV_RELEASE /var/www/html/current
@@ -128,5 +142,3 @@ jobs:
           curl -H "Content-Type: application/json" \
           -d '{"content": "Deployment Failed!"}' \
           ${{ secrets.DISCORD_WEBHOOK_URL }}
-          
-
