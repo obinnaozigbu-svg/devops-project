@@ -105,10 +105,10 @@ jobs:
       matrix:
         include:
           - name: prod-1
-            ip: ${{ env.PROD_SERVER_1 }}
+            ip: 13.60.8.170
 
           - name: prod-2
-            ip: ${{ env.PROD_SERVER_2 }}
+            ip: 16.171.111.54
 
     steps:
       - name: Checkout code
