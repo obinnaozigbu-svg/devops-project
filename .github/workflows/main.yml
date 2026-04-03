@@ -133,6 +133,8 @@ jobs:
         run: |
           ssh -o StrictHostKeyChecking=no ubuntu@${{ matrix.server }} "
             RELEASE=/var/www/staging/releases/release-${{ github.sha }}
+            mkdir -p \$RELEASE
+            rsync -av --delete ./web/ \$RELEASE
             ln -sfn \$RELEASE /var/www/html/current
           "
 
