@@ -108,6 +108,27 @@ jobs:
         with:
           ssh-private-key: ${{ secrets.SSH_KEY }}
 
+      - name: Prepare Servers
+        run: |
+          scp -o StrictHostKeyChecking=no nginx/default.conf ubuntu@${{ matrix.server }}:/tmp/default.conf
+
+          ssh -o StrictHostKeyChecking=no ubuntu@${{ matrix.server }} "
+            if ! command -v nginx > /dev/null; then
+              sudo apt update
+              sudo apt upgrade
+              sudo apt install nginx -y
+            fi
+
+            sudo mkdir -p /var/www/html
+            sudo mkdir -p /var/www/staging/releases
+            sudo chown -R ubuntu:ubuntu /var/www
+
+            sudo mv /tmp/default.conf /etc/nginx/sites-available/default
+
+            sudo nginx -t
+            sudo systemctl restart nginx
+          "
+
       - name: Promote to Production
         run: |
           ssh -o StrictHostKeyChecking=no ubuntu@${{ matrix.server }} "
