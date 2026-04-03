@@ -131,12 +131,14 @@ jobs:
 
       - name: Promote to Production
         run: |
-          ssh -o StrictHostKeyChecking=no ubuntu@${{ matrix.server }} "
-            RELEASE=/var/www/staging/releases/release-${{ github.sha }}
-            mkdir -p \$RELEASE
-            rsync -av --delete ./web/ \$RELEASE
-            ln -sfn \$RELEASE /var/www/html/current
-          "
+          RELEASE=/var/www/staging/releases/release-${{ github.sha }}
+
+          ssh -o StrictHostKeyChecking=no ubuntu@${{ matrix.server}} "mkdir -p \$RELEASE"
+
+          rsync -av --delete ./web/ ubuntu@${{ matrix.server }}:\$RELEASE
+
+          ssh -o StrictHostKeyChecking=no ubuntu@${{matrix.server }} "ln -sfn \$RELEASE /var/www/html/current"
+
 
 
       - name: Rollback  #Runs if healthcheck fails
