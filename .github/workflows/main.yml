@@ -110,7 +110,7 @@ jobs:
 
       - name: Promote to Production
         run: |
-          ssh -o StrictHostKeyChecking=no ubuntu@{{ matrix.server }} "
+          ssh -o StrictHostKeyChecking=no ubuntu@${{ matrix.server }} "
             RELEASE=/var/www/staging/releases/release-${{ github.sha }}
             ln -sfn \$RELEASE /var/www/html/current
           "
@@ -119,7 +119,7 @@ jobs:
       - name: Rollback  #Runs if healthcheck fails
         if: failure()
         run: |
-          ssh -o StrictHostKeyChecking=no ubuntu@{{ matrix.server }} "
+          ssh -o StrictHostKeyChecking=no ubuntu@${{ matrix.server }} "
             PREV_RELEASE=\$(ls -dt /var/www/staging/releases/* | sed -n '2p')
             if [ -n \'\$PREV_RELEASE\' ]; then
               ln -sfn \$PREV_RELEASE /var/www/html/current
