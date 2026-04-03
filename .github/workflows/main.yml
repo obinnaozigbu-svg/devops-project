@@ -11,6 +11,7 @@ on:
 jobs:
   build:
     runs-on: ubuntu-latest
+    environment: production
 
     steps:
       - name: Checkout code
@@ -67,7 +68,7 @@ jobs:
             mkdir -p /var/www/staging/releases
 
             #Create a unique release folder with timestamp
-            NEW_RELEASE=/var/www/staging/releases/release-$(date +%s)
+            NEW_RELEASE=/var/www/staging/releases/release-${{ github.sha }}
             mkdir -p \$NEW_RELEASE
             echo "Deploying to:" \$NEW_RELEASE
 
@@ -92,17 +93,26 @@ jobs:
             
           "
 
-      - name: Deploy to Production
+      - name: Promote to Production
         if: success()
         run: |
           ssh -o StrictHostKeyChecking=no ubuntu@13.61.0.217 "
-            ln -sfn /var/www/staging/current /var/www/html/current
+            RELEASE=/var/www/staging/releases/release-${{ github.sha }}
+            ln -sfn \$RELEASE /var/www/html/current
           "
 
-      - name: Keep at least 3 releases, delete older ones
+
+      - name: Rollback  #Runs if healthcheck fails
+        if: failure()
         run: |
           ssh -o StrictHostKeyChecking=no ubuntu@13.61.0.217 "
-            ls -dt /var/www/releases/* | tail -n +4 | xargs rm -rf 
+            PREV_RELEASE=\$(ls -dt /var/www/staging/releases/* | sed -n '2p')
+            if [ -n \'\$PREV_RELEASE\' ]; then
+              ln -sfn \$PREV_RELEASE /var/www/html/current
+              echo 'Rollback complete'
+            else
+              'No previous release to rollback to'
+            fi
           "
 
       - name: Notify Success
@@ -119,3 +129,4 @@ jobs:
           -d '{"content": "Deployment Failed!"}' \
           ${{ secrets.DISCORD_WEBHOOK_URL }}
           
+
