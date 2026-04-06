@@ -9,9 +9,7 @@ on:
   workflow_dispatch:
 
 env:
-  STAGING_SERVER: 13.48.84.65
-  PROD_SERVER_1: 13.60.8.170
-  PROD_SERVER_2: 16.171.111.54
+  STAGING_SERVER: 13.51.171.180
 
 jobs:
   deploy-staging:
@@ -105,10 +103,10 @@ jobs:
       matrix:
         include:
           - name: prod-1
-            ip: 13.60.8.170
+            ip: 13.61.5.210
 
           - name: prod-2
-            ip: 16.171.111.54
+            ip: 51.20.79.153
 
     steps:
       - name: Checkout code
