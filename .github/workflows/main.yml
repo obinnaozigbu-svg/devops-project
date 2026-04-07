@@ -100,13 +100,19 @@ jobs:
     runs-on: ubuntu-latest
     environment: production    #triggers manual approval
     strategy:
+      max-parallel: 1    #Rolling deployment
       matrix:
         include:
           - name: prod-1
             ip: 13.61.5.210
+            instance_id: i-063e323022cb76eed
 
           - name: prod-2
             ip: 51.20.79.153
+            instance_id: i-0b12b7833aa170718
+
+    env:
+      TARGET_GROUP_ARN: arn:aws:elasticloadbalancing:eu-north-1:191369739072:targetgroup/devops-target-group/7a8a0ac7fd3700d5
 
     steps:
       - name: Checkout code
@@ -116,6 +122,24 @@ jobs:
         uses: webfactory/ssh-agent@v0.9.0
         with:
           ssh-private-key: ${{ secrets.SSH_KEY }}
+
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          aws-access-key-id: ${{ secrets.ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          region: eu-north-1
+
+      - name: Deregister from Load Balancer
+        run: |
+          echo "Deregistering ${{ matrix.name }}
+
+          aws elbv2 deregister-targets \
+            --target-group-arn $TARGET_GROUP_ARN \
+            --targets Id=${{ matrix.instance_id }}
+
+      - name: Wait for connections to drain
+        run: sleep 30
 
       - name: Prepare Servers
         run: |
@@ -138,7 +162,7 @@ jobs:
             sudo systemctl restart nginx
           "
 
-      - name: Promote to Production
+      - name: Deploy to Production Server
         run: |
 
           ssh -o StrictHostKeyChecking=no ubuntu@${{ matrix.ip }} "
@@ -151,6 +175,33 @@ jobs:
           ssh -o StrictHostKeyChecking=no ubuntu@${{matrix.ip }} "
             ln -sfn /var/www/staging/releases/release-${{ github.sha }} /var/www/html/current
           "
+
+      - name: Re-register to Load balancer
+        run: |
+          echo "Re-registering ${{ matrix.name }}
+
+          aws elbv2 register-targets \
+            --target-group-arn $TARGET_GROUP_ARN
+            --targets Id=${{ matrix.instance_id }}
+
+      - name: Wait for healthy status
+        run: |
+          echo "Waiting for ${{ matrix.name }} to become healthy"
+
+          while true; do
+            STATUS=$(aws elbv2 describe-target-health \
+              --target-group-arn $TARGET_GROUP_ARN \
+              --query "TargetHealthDescriptions[?Target.Id=='${{ matrix.instance_id }}'].TargetHealth.State" \
+              --output text)
+
+            if [ "$STATUS" = "healthy" ]; then
+              echo "${{ matrix.name }} is healthy"
+              break
+            fi
+
+            echo "Still waiting"
+            sleep 10
+          done
 
 
 
