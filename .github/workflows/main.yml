@@ -9,7 +9,7 @@ on:
   workflow_dispatch:
 
 env:
-  STAGING_SERVER: 13.51.171.180
+  STAGING_SERVER: 51.21.134.49
 
 jobs:
   deploy-staging:
@@ -104,12 +104,12 @@ jobs:
       matrix:
         include:
           - name: prod-1
-            ip: 13.61.5.210
-            instance_id: i-063e323022cb76eed
+            ip: 51.20.255.239
+            instance_id: i-0055abe18df13fc19
 
           - name: prod-2
-            ip: 51.20.79.153
-            instance_id: i-0b12b7833aa170718
+            ip: 51.20.190.65
+            instance_id: i-06c76b061f16b55f0
 
     env:
       TARGET_GROUP_ARN: arn:aws:elasticloadbalancing:eu-north-1:191369739072:targetgroup/devops-target-group/7a8a0ac7fd3700d5
