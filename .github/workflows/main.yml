@@ -132,7 +132,7 @@ jobs:
 
       - name: Deregister from Load Balancer
         run: |
-          echo "Deregistering ${{ matrix.name }}
+          echo "Deregistering ${{ matrix.name }}"
 
           aws elbv2 deregister-targets \
             --target-group-arn $TARGET_GROUP_ARN \
@@ -178,10 +178,10 @@ jobs:
 
       - name: Re-register to Load balancer
         run: |
-          echo "Re-registering ${{ matrix.name }}
+          echo "Re-registering ${{ matrix.name }}"
 
           aws elbv2 register-targets \
-            --target-group-arn $TARGET_GROUP_ARN
+            --target-group-arn $TARGET_GROUP_ARN \
             --targets Id=${{ matrix.instance_id }}
 
       - name: Wait for healthy status
