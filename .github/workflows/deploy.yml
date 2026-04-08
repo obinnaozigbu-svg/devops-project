@@ -1,0 +1,22 @@
+name: Deploy to Green Server
+
+on:
+  push:
+    branches:
+      - main
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Deploy via SSH
+        uses: appleboy/ssh-action@v0.1.6
+        with:
+          host: 51.20.255.239
+          username: ubuntu
+          key: ${{ secrets.SSH_KEY }}
+          script: |
+            cd /var/www/html/new-release
+            git pull origin main
+            sudo systemctl restart nginx
