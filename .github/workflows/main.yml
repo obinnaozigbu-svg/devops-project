@@ -13,17 +13,6 @@ jobs:
   deploy-production:
     runs-on: ubuntu-latest
     environment: production
-    strategy:
-      max-parallel: 1
-      matrix:
-        include:
-          - name: prod-1
-            ip: 16.170.172.71
-            instance_id: i-06e82f94adaa3fe15
-
-          - name: prod-2
-            ip: 13.61.187.141
-            instance_id: i-046a774e3099ca3a4
 
     env:
       TARGET_GROUP_ARN: arn:aws:elasticloadbalancing:eu-north-1:191369739072:targetgroup/devops-target-group/7a8a0ac7fd3700d5
@@ -44,12 +33,35 @@ jobs:
           aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
           aws-region: eu-north-1
 
+      # Detect ACTIVE server
+      - name: Detect Active Server
+        id: detect
+        run: |
+          ACTIVE=$(aws elbv describe-target-health \
+            --target-group-arn $TARGET_GROUP_ARN \
+            --query "TargetHealthDescriptions[?TargetHealth.State=='healthy'].Target.Id" \
+            --output text)
+
+          echo "Active server: $ACTIVE"
+
+          if [ "$ACTIVE" = "i-06e82f94adaa3fe15" ]; then
+            INACTIVE_IP="13.61.187.141"
+            INACTIVE_ID="i-046a774e3099ca3a4"
+          else
+            INACTIVE_IP="16.170.172.71"
+            INACTIVE_ID="i-06e82f94adaa3fe15"
+          fi
+
+          echo "INACTIVE_IP=$INACTIVE_IP" >> $GITHUB_ENV
+          echo "INACTIVE_ID=$INACTIVE_ID" >> $GITHUB_ENV
+
+
       # 🔴 Step 1: Remove instance from load balancer
-      - name: Deregister from Load Balancer
+      - name: Deregister Inactive from Load Balancer
         run: |
           aws elbv2 deregister-targets \
             --target-group-arn $TARGET_GROUP_ARN \
-            --targets Id=${{ matrix.instance_id }}
+            --targets Id=$INACTIVE_ID
 
       - name: Wait for connections to drain
         run: sleep 30
@@ -57,9 +69,9 @@ jobs:
       # 🔧 Step 2: Prepare server (clean + standardised)
       - name: Prepare Server
         run: |
-          scp -o StrictHostKeyChecking=no nginx/default.conf ubuntu@${{ matrix.ip }}:/tmp/default.conf
+          scp -o StrictHostKeyChecking=no nginx/default.conf ubuntu@$INACTIVE_IP:/tmp/default.conf
 
-          ssh -o StrictHostKeyChecking=no ubuntu@${{ matrix.ip }} "
+          ssh -o StrictHostKeyChecking=no ubuntu@$INACTIVE_IP "
             set -e
 
             # Install nginx if missing
@@ -80,13 +92,13 @@ jobs:
           "
 
       # 🚀 Step 3: Deploy application (FIXED)
-      - name: Deploy to Production Server
+      - name: Deploy to Inactive Server
         run: |
 
           # Upload web files directly to server temp folder
-          rsync -av --delete ./web/ ubuntu@${{ matrix.ip }}:/tmp/release/
+          rsync -av --delete ./web/ ubuntu@$INACTIVE_IP:/tmp/release/
 
-          ssh -o StrictHostKeyChecking=no ubuntu@${{ matrix.ip }} "
+          ssh -o StrictHostKeyChecking=no ubuntu@$INACTIVE_IP "
             set -e
 
             # Clean current release
@@ -100,41 +112,41 @@ jobs:
             sudo chown -R www-data:www-data /var/www/html/current
           "
 
-      # 🔄 Step 4: Re-add to Load Balancer
+      # 🧪 STEP 4: Health check inactive server
+      - name: Test Inactive Server
+        run: |
+          STATUS=$(curl -s -o /dev/null -w "%{http_code}" http://$INACTIVE_IP)
+
+          if [ "$STATUS" -ne 200 ]; then
+            echo "Inactive server failed"
+            exit 1
+          fi
+
+      # Switch traffic to inactive (Now active)
       - name: Re-register to Load balancer
         run: |
           aws elbv2 register-targets \
             --target-group-arn $TARGET_GROUP_ARN \
-            --targets Id=${{ matrix.instance_id }}
+            --targets Id=$INACTIVE_ID
 
-      # 🟢 Step 5: Health check
+
       - name: Wait for healthy status
         run: |
-          echo "Waiting for ${{ matrix.name }} to become healthy"
 
           while true; do
             STATUS=$(aws elbv2 describe-target-health \
               --target-group-arn $TARGET_GROUP_ARN \
-              --query "TargetHealthDescriptions[?Target.Id=='${{ matrix.instance_id }}'].TargetHealth.State" \
+              --query "TargetHealthDescriptions[?Target.Id=='$INACTIVE_ID'].TargetHealth.State" \
               --output text)
 
             if [ "$STATUS" = "healthy" ]; then
-              echo "${{ matrix.name }} is healthy"
+              echo "$INACTIVE_ID is healthy"
               break
             fi
 
             echo "Still waiting"
             sleep 10
           done
-
-      # 🔙 Step 6: Rollback if failure
-      - name: Rollback
-        if: failure()
-        run: |
-          ssh -o StrictHostKeyChecking=no ubuntu@${{ matrix.ip }} "
-            echo 'Rollback triggered'
-            sudo rm -rf /var/www/html/current/*
-          "
 
       # 📣 Notifications
       - name: Notify Success
