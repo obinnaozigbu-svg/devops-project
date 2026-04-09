@@ -37,7 +37,7 @@ jobs:
       - name: Detect Active Server
         id: detect
         run: |
-          ACTIVE=$(aws elbv describe-target-health \
+          ACTIVE=$(aws elbv2 describe-target-health \
             --target-group-arn $TARGET_GROUP_ARN \
             --query "TargetHealthDescriptions[?TargetHealth.State=='healthy'].Target.Id" \
             --output text)
