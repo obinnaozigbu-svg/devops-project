@@ -44,12 +44,12 @@ jobs:
 
           echo "Active server: $ACTIVE"
 
-          if [ "$ACTIVE" = "i-06e82f94adaa3fe15" ]; then
-            INACTIVE_IP="13.61.187.141"
-            INACTIVE_ID="i-046a774e3099ca3a4"
+          if [ "$ACTIVE" = "i-024d772244f1b8fdf" ]; then
+            INACTIVE_IP="13.60.5.156"
+            INACTIVE_ID="i-0b97b1f39519dad6e"
           else
-            INACTIVE_IP="16.170.172.71"
-            INACTIVE_ID="i-06e82f94adaa3fe15"
+            INACTIVE_IP="51.20.83.191"
+            INACTIVE_ID="i-024d772244f1b8fdf"
           fi
 
           echo "INACTIVE_IP=$INACTIVE_IP" >> $GITHUB_ENV
