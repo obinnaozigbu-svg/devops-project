@@ -112,7 +112,7 @@ jobs:
             sudo chown -R www-data:www-data /var/www/html/current
           "
 
-      # 🧪 STEP 4: Health check inactive server
+      # STEP 4: Health check inactive server
       - name: Test Inactive Server
         run: |
           STATUS=$(curl -s -o /dev/null -w "%{http_code}" http://$INACTIVE_IP)
@@ -133,20 +133,49 @@ jobs:
       - name: Wait for healthy status
         run: |
 
-          while true; do
+          MAX_RETRIES=12   # 12 × 10s = 2 minutes
+          COUNT=0
+
+          echo "Waiting for server to become healthy..."
+
+          while [ $COUNT -lt $MAX_RETRIES ]; do
             STATUS=$(aws elbv2 describe-target-health \
-              --target-group-arn $TARGET_GROUP_ARN \
-              --query "TargetHealthDescriptions[?Target.Id=='$INACTIVE_ID'].TargetHealth.State" \
-              --output text)
+            --target-group-arn $TARGET_GROUP_ARN \
+            --query "TargetHealthDescriptions[?Target.Id=='$INACTIVE_ID'].TargetHealth.State" \
+            --output text)
 
             if [ "$STATUS" = "healthy" ]; then
-              echo "$INACTIVE_ID is healthy"
-              break
+              echo "Server is healthy ✅"
+              exit 0
             fi
 
-            echo "Still waiting"
+            echo "Still not healthy... attempt $COUNT"
+            COUNT=$((COUNT+1))
             sleep 10
           done
+
+          echo "Server failed health check ❌"
+          exit 1
+
+      - name: Rollback Traffic
+        if: failure()
+        run: |
+          echo "Rollback triggered 🚨"
+
+          # Re-register previously active server
+          aws elbv2 register-targets \
+          --target-group-arn $TARGET_GROUP_ARN \
+          --targets Id=$ACTIVE_ID
+
+          # Remove broken deployment from LB
+          aws elbv2 deregister-targets \
+          --target-group-arn $TARGET_GROUP_ARN \
+          --targets Id=$INACTIVE_ID
+
+      - name: Print Deployment Info
+        run: |
+          echo "Active server: $ACTIVE_ID"
+          echo "Deploying to: $INACTIVE_ID ($INACTIVE_IP)"
 
       # 📣 Notifications
       - name: Notify Success
