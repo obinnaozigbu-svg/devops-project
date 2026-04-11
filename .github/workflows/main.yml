@@ -43,6 +43,7 @@ jobs:
             --output text)
 
           echo "Active server: $ACTIVE"
+          echo "ACTIVE_ID=$ACTIVE" >> $GITHUB_ENV
 
           if [ "$ACTIVE" = "i-024d772244f1b8fdf" ]; then
             INACTIVE_IP="13.60.5.156"
@@ -156,6 +157,13 @@ jobs:
 
           echo "Server failed health check ❌"
           exit 1
+
+      - name: Remove Old Server
+        if: success()
+        run: |
+          aws elbv2 deregister-targets \
+          --target-group-arn $TARGET_GROUP_ARN \
+          --targets Id=$ACTIVE_ID
 
       - name: Rollback Traffic
         if: failure()
