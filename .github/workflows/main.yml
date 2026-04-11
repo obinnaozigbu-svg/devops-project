@@ -39,7 +39,7 @@ jobs:
         run: |
           ACTIVE=$(aws elbv2 describe-target-health \
             --target-group-arn $TARGET_GROUP_ARN \
-            --query "TargetHealthDescriptions[?TargetHealth.State=='healthy'].Target.Id" \
+            --query "TargetHealthDescriptions[?TargetHealth.State=='healthy'].Target.Id | [0]" \
             --output text)
 
           echo "Active server: $ACTIVE"
