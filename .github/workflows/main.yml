@@ -162,8 +162,8 @@ jobs:
         if: success()
         run: |
           aws elbv2 deregister-targets \
-          --target-group-arn $TARGET_GROUP_ARN \
-          --targets Id=$ACTIVE_ID
+            --target-group-arn $TARGET_GROUP_ARN \
+            --targets Id=$ACTIVE_ID
 
       - name: Rollback Traffic
         if: failure()
@@ -172,13 +172,13 @@ jobs:
 
           # Re-register previously active server
           aws elbv2 register-targets \
-          --target-group-arn $TARGET_GROUP_ARN \
-          --targets Id=$ACTIVE_ID
+            --target-group-arn $TARGET_GROUP_ARN \
+            --targets Id=$ACTIVE_ID
 
           # Remove broken deployment from LB
           aws elbv2 deregister-targets \
-          --target-group-arn $TARGET_GROUP_ARN \
-          --targets Id=$INACTIVE_ID
+            --target-group-arn $TARGET_GROUP_ARN \
+            --targets Id=$INACTIVE_ID
 
       - name: Print Deployment Info
         run: |
