@@ -58,7 +58,7 @@ jobs:
           echo "ACTIVE_ID=$ACTIVE_ID" >> $GITHUB_ENV
           echo "INACTIVE_IP=$INACTIVE_IP" >> $GITHUB_ENV
           echo "INACTIVE_ID=$INACTIVE_ID" >> $GITHUB_ENV
-          echo "NEW_ACTIVE=$INACTIVE"
+          echo "NEW_ACTIVE=$INACTIVE" >> $GITHUB_ENV
 
 
       # 🔴 Step 1: Remove instance from load balancer
