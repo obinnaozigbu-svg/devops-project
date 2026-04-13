@@ -37,24 +37,25 @@ jobs:
       - name: Detect Active Server
         id: detect
         run: |
-          ACTIVE=$(aws elbv2 describe-target-health \
-            --target-group-arn $TARGET_GROUP_ARN \
-            --query "TargetHealthDescriptions[?TargetHealth.State=='healthy'].Target.Id | [0]" \
-            --output text)
+          ACTIVE=$(cat .active_server)
+          echo "ACTIVE=$ACTIVE"
 
-          echo "Active server: $ACTIVE"
-          echo "ACTIVE_ID=$ACTIVE" >> $GITHUB_ENV
-
-          if [ "$ACTIVE" = "i-024d772244f1b8fdf" ]; then
-            INACTIVE_IP="13.60.5.156"
-            INACTIVE_ID="i-0b97b1f39519dad6e"
+          if [ "$ACTIVE" = "prod-1" ]; then
+            INACTIVE="prod-2"
+            INACTIVE_IP="16.171.138.230"
+            INACTIVE_ID="i-0ecf0355dbf8cf0b9"
+            ACTIVE_ID="i-0ce4a9f3233de5060"
           else
-            INACTIVE_IP="51.20.83.191"
-            INACTIVE_ID="i-024d772244f1b8fdf"
+            INACTIVE="prod-1"
+            INACTIVE_IP="13.60.28.38"
+            INACTIVE_ID="i-0ce4a9f3233de5060"
+            ACTIVE_ID="i-0ecf0355dbf8cf0b9"
           fi
 
+          echo "ACTIVE_ID=$ACTIVE_ID" >> $GITHUB_ENV
           echo "INACTIVE_IP=$INACTIVE_IP" >> $GITHUB_ENV
           echo "INACTIVE_ID=$INACTIVE_ID" >> $GITHUB_ENV
+          echo "NEW_ACTIVE=$INACTIVE"
 
 
       # 🔴 Step 1: Remove instance from load balancer
@@ -164,6 +165,18 @@ jobs:
           aws elbv2 deregister-targets \
             --target-group-arn $TARGET_GROUP_ARN \
             --targets Id=$ACTIVE_ID
+
+      - name: Update Active Server
+        if: success()
+        run: |
+          echo "$NEW_ACTIVE" > .active_server
+
+          git config user.name "Obinna"
+          git config user.email "obinnaozigbu@gmail.com"
+
+          git add .active_server
+          git commit -m "Switch server to $NEW_ACTIVE"
+          git push
 
       - name: Rollback Traffic
         if: failure()
