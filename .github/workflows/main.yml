@@ -120,12 +120,23 @@ jobs:
       # STEP 4: Health check inactive server
       - name: Test Inactive Server
         run: |
-          STATUS=$(curl -s -o /dev/null -w "%{http_code}" http://$INACTIVE_IP)
+          echo "Monitoring server after deployment..."
 
-          if [ "$STATUS" -ne 200 ]; then
-            echo "Inactive server failed"
-            exit 1
-          fi
+          for i in {1..6}; do
+            STATUS=$(curl -s -o /dev/null -w "%{http_code}" http://$INACTIVE_IP)
+            TIME=$(curl -s -o /dev/null -s -w "%{time_total}" http://$INACTIVE_IP)
+
+            echo "Check $i - STATUS: $STATUS | Response Time: $TIME sec"
+
+            if [ "$STATUS" -ne 200 ]; then
+              echo "Server became unhealthy after deployment"
+              exit 1
+            fi
+
+            sleep 10
+          done
+
+          echo "Server stable"
 
       # Switch traffic to inactive (Now active)
       - name: Re-register to Load balancer
@@ -206,12 +217,21 @@ jobs:
         if: success()
         run: |
           curl -H "Content-Type: application/json" \
-          -d '{"content": "Deployment Successful 🚀"}' \
+          -d '{
+            \"content\": "Deployment Successful 🚀
+            New Active IP: $NEW_ACTIVE
+            Server: $INACTIVE_ID \"
+          }' \
           ${{ secrets.DISCORD_WEBHOOK_URL }}
 
       - name: Notify Failure
         if: failure()
         run: |
           curl -H "Content-Type: application/json" \
-          -d '{"content": "Deployment Failed ❌"}' \
+          -d '{
+            \"content\": "Deployment Failed ❌
+            Server: $INACTIVE_ID
+            IP: $INACTIVE_IP
+            Check logs immediately.\"
+          }' \
           ${{ secrets.DISCORD_WEBHOOK_URL }}
