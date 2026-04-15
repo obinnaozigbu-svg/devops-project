@@ -36,6 +36,20 @@ jobs:
           aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
           aws-region: eu-north-1
 
+      - name: Create SNS Topic
+        id: sns
+        run: |
+          ARN=$(aws sns create-topic --name devops-alerts --query 'TopicArn' --output text)
+          echo "SNS_TOPIC_ARN=$ARN" >> $GITHUB_ENV
+          echo "Created SNS Topic: $ARN"
+      
+      - name: Subscribe Email to SNS
+        run: |
+          aws sns subscribe \
+            --topic-arn $SNS_TOPIC_ARN \
+            --protocol email \
+            --notification-endpoint your-email@example.com
+
       # Detect ACTIVE server
       - name: Detect Active Server
         id: detect
@@ -117,6 +131,22 @@ jobs:
             sudo chown -R www-data:www-data /var/www/html/current
           "
 
+      - name: Create CloudWatch Alarm
+        run: |
+          aws cloudwatch put-metric-alarm \
+            --alarm-name "High-CPU-$INACTIVE_ID" \
+            --metric-name CPUUtilization \
+            --namespace AWS/EC2 \
+            --statistic Average \
+            --period 60 \
+            --threshold 70 \
+            --comparison-operator GreaterThanThreshold \
+            --dimensions Name=InstanceId,Value=$INACTIVE_ID \
+            --evaluation-periods 2 \
+            --alarm-actions $SNS_TOPIC_ARN \
+            --region eu-north-1
+
+
       # STEP 4: Health check inactive server
       - name: Test Inactive Server
         run: |
@@ -138,6 +168,7 @@ jobs:
 
           echo "Server stable"
 
+     
       # Switch traffic to inactive (Now active)
       - name: Re-register to Load balancer
         run: |
